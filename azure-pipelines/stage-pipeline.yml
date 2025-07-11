@@ -9,4 +9,4 @@ extends:
   parameters:
     variables_group: 'admin-client-stage-variable-group'
     service_connection: 'non-prod-service-connection'
-    static_web_app_name: 'non-prod-retornos-client'
+    static_web_app_name: 'non-prod-retornos-admin-client'

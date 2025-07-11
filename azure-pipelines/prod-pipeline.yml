@@ -8,4 +8,4 @@ extends:
   parameters:
     variables_group: 'admin-client-prod-variable-group'
     service_connection: 'prod-service-connection'
-    static_web_app_name: 'stageFrontRetornos'
+    static_web_app_name: 'prod-retornos-admin-client'
