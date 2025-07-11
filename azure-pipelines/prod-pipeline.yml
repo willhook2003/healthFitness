@@ -1,0 +1,11 @@
+trigger:
+  branches:
+    include:
+      - main
+
+extends:
+  template: deploy.yml
+  parameters:
+    variables_group: 'admin-client-prod-variable-group'
+    service_connection: 'prod-service-connection'
+    static_web_app_name: 'stageFrontRetornos'

@@ -1,0 +1,12 @@
+trigger:
+  branches:
+    include:
+      - stage
+      - hotfixex
+
+extends:
+  template: deploy.yml
+  parameters:
+    variables_group: 'admin-client-stage-variable-group'
+    service_connection: 'non-prod-service-connection'
+    static_web_app_name: 'non-prod-retornos-client'

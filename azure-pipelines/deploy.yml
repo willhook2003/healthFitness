@@ -1,0 +1,152 @@
+parameters:
+  - name: variables_group
+    type: string
+  - name: static_web_app_name
+    type: string
+  - name: service_connection
+    type: string
+
+jobs:
+  - job: build_and_deploy_job
+    displayName: Build and Deploy Job
+
+    variables:
+      - group: ${{ parameters.variables_group }}
+      - name: app_location
+        value: '/'
+      - name: api_location
+        value: ''
+      - name: output_location
+        value: 'dist'
+
+    steps:
+      - checkout: self
+        submodules: true
+
+      - script: |
+          echo "Exporting Vite environment variables..."
+          export VITE_API_BASE_URL=$(VITE_API_BASE_URL)
+          export VITE_APP_ENVIRONMENT=$(VITE_APP_ENVIRONMENT)
+          export VITE_MSAL_AUTHORITY=$(VITE_MSAL_AUTHORITY)
+          export VITE_MSAL_CLIENT_ID=$(VITE_MSAL_CLIENT_ID)
+          export VITE_DEFAULT_TIMEZONE=$(VITE_DEFAULT_TIMEZONE)
+
+          export REPLACE_WITH=""
+          if [ "$(Build.Reason)" == "PullRequest" ]; then
+            REPLACE_WITH="-preview$(System.PullRequest.PullRequestId).centralus"
+          fi
+
+          echo "##vso[task.setvariable variable=VITE_MSAL_ORIGINAL_REDIRECT_URI]$(VITE_MSAL_REDIRECT_URI)"
+
+          PROCESSED_VITE_MSAL_REDIRECT_URI=$(echo "$(VITE_MSAL_REDIRECT_URI)" | sed "s/#PLACEHOLDER#/$REPLACE_WITH/g")
+          echo "Processed VITE_MSAL_REDIRECT_URI: $PROCESSED_VITE_MSAL_REDIRECT_URI"
+          echo "##vso[task.setvariable variable=VITE_MSAL_REDIRECT_URI]$PROCESSED_VITE_MSAL_REDIRECT_URI"
+          export VITE_MSAL_REDIRECT_URI=$PROCESSED_VITE_MSAL_REDIRECT_URI
+
+          PROCESSED_VITE_MSAL_POST_LOGOUT_REDIRECT_URI=$(echo "$(VITE_MSAL_POST_LOGOUT_REDIRECT_URI)" | sed "s/#PLACEHOLDER#/$REPLACE_WITH/g")
+          echo "Processed VITE_MSAL_POST_LOGOUT_REDIRECT_URI: $PROCESSED_VITE_MSAL_POST_LOGOUT_REDIRECT_URI"
+          echo "##vso[task.setvariable variable=VITE_MSAL_POST_LOGOUT_REDIRECT_URI]$PROCESSED_VITE_MSAL_POST_LOGOUT_REDIRECT_URI"
+          export VITE_MSAL_POST_LOGOUT_REDIRECT_URI=$PROCESSED_VITE_MSAL_POST_LOGOUT_REDIRECT_URI
+
+          # Optional: Run your own build if needed
+          # npm ci
+          # npm run build
+        displayName: 'Export environment variables for Vite'
+      - task: AzureCLI@2
+        displayName: 'Acquire API key'
+        inputs:
+          azureSubscription: ${{ parameters.service_connection }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            APIKEY=$(az staticwebapp secrets list --name ${{ parameters.static_web_app_name }} | jq -r '.properties.apiKey')
+            echo "##vso[task.setvariable variable=apiKey;issecret=true]$APIKEY"
+
+      # This task takes place when the build is a pull request
+      - task: AzureStaticWebApp@0
+        condition: eq(variables['Build.Reason'], 'PullRequest')
+        displayName: 'Deploy Static Web Apps in a preview environment'
+        inputs:
+          azure_static_web_apps_api_token: $(apiKey)
+          app_location: ${{ variables.app_location }}
+          api_location: ${{ variables.api_location }}
+          output_location: ${{ variables.output_location }}
+          deployment_environment: preview$(System.PullRequest.PullRequestId)
+
+      # These tasks take place when the build is a push
+      - task: AzureStaticWebApp@0
+        condition: ne(variables['Build.Reason'], 'PullRequest')
+        displayName: 'Deploy Static Web Apps'
+        inputs:
+          azure_static_web_apps_api_token: $(apiKey)
+          app_location: ${{ variables.app_location }}
+          api_location: ${{ variables.api_location }}
+          output_location: ${{ variables.output_location }}
+      - task: AzureCLI@2
+        displayName: 'Add URL to App registration authentication / Remove preview environment'
+        inputs:
+          azureSubscription: ${{ parameters.service_connection }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            API_NAME="${VITE_API_BASE_URL#https://}"
+            API_NAME="${API_NAME%%.*}"
+            EXISTING_CORS=$(az webapp cors show --name $API_NAME --resource-group retornos --query "allowedOrigins" --output tsv)
+
+            if [ "$(Build.Reason)" == "PullRequest" ]; then
+              echo "This is a pull request. Adding URL to App registration authentication and CORS"
+              EXISTING_URLS=$(az ad app show --id $(VITE_MSAL_CLIENT_ID) --query "[spa.redirectUris]" --output tsv)
+              if [[ $EXISTING_URLS == *$(VITE_MSAL_REDIRECT_URI)* ]]; then
+                  echo "The URL $(VITE_MSAL_REDIRECT_URI) is already in the list. Skipping."
+              else
+                  URLS_JSON=$(echo "$EXISTING_URLS" | tr '\t' '\n' | jq -R -s 'split("\n") | map(select(length > 0))')
+                  JSON_WITH_PREVIEW_URL=$(echo "$URLS_JSON" | jq --arg newurl "$(VITE_MSAL_REDIRECT_URI)" '. + [$newurl]')
+                  az ad app update --id $(VITE_MSAL_CLIENT_ID) --set "spa={\"redirectUris\": $(echo "$JSON_WITH_PREVIEW_URL" | jq -c '.')}"
+                  echo "The URL $(VITE_MSAL_REDIRECT_URI) has been added to the list."
+              fi
+
+              if [[ $EXISTING_CORS == *$(VITE_MSAL_REDIRECT_URI)* ]]; then
+                  echo "The URL $(VITE_MSAL_REDIRECT_URI) is already in CORS. Skipping."
+              else
+                  az webapp cors add --name $API_NAME --resource-group retornos --allowed-origins $(VITE_MSAL_REDIRECT_URI)
+                  echo "The URL $(VITE_MSAL_REDIRECT_URI) has been added to CORS configuration."
+              fi
+            else
+              PR_ID=$(git log -1 --pretty=%B | grep -oE 'PR [0-9]+' | grep -oE '[0-9]+' | head -1)
+              if [ -z "$PR_ID" ]; then
+                echo "This is not a pull request merge, no preview environment to remove."
+              else
+                echo "Pull request merge found. Removing preview$PR_ID environment."
+                ENVIRONMENT=$(az staticwebapp environment list --name ${{ parameters.static_web_app_name }} | jq --arg previewName "preview$PR_ID" -r '.[] | select(.name == $previewName) | .name')
+                if [ -n "$ENVIRONMENT" ]; then
+                  echo "Deleting preview environment $ENVIRONMENT"
+                  az staticwebapp environment delete --name ${{ parameters.static_web_app_name }} --environment-name $ENVIRONMENT --yes
+                else
+                  echo "No preview environment found. Skipping."
+                fi
+
+                REPLACE_WITH="-preview$PR_ID.centralus"
+                REMOVE_URL=$(echo "$(VITE_MSAL_ORIGINAL_REDIRECT_URI)" | sed "s/#PLACEHOLDER#/$REPLACE_WITH/g")
+
+                if [ -z "$(echo "$REMOVE_URL" | tr -d '[:space:]')" ]; then
+                  echo "The URL to remove is empty. Skipping."
+                else
+                  echo "Removing URL $REMOVE_URL"
+                  EXISTING_URLS=$(az ad app show --id $(VITE_MSAL_CLIENT_ID) --query "[spa.redirectUris]" --output tsv)
+                  if [[ $EXISTING_URLS == *$REMOVE_URL* ]]; then
+                    echo "Removing preview URL from app registration authentication"
+                    JSON_WITHOUT_PREVIEW_URL=$(echo "$EXISTING_URLS" | sed "s|$REMOVE_URL||g" | tr '\t' '\n' | jq -R -s 'split("\n") | map(select(length > 0))')
+                    az ad app update --id $(VITE_MSAL_CLIENT_ID) --set "spa={\"redirectUris\": $(echo "$JSON_WITHOUT_PREVIEW_URL" | jq -c '.')}"
+                  else
+                    echo "The URL is not in the list. Skipping."
+                  fi
+                  
+                  if [[ $EXISTING_CORS == *$REMOVE_URL* ]]; then
+                    az webapp cors remove --name $API_NAME --resource-group retornos --allowed-origins $REMOVE_URL
+                    echo "The URL has been removed from CORS configuration."
+                  else
+                    echo "The URL is not in CORS. Skipping."
+                  fi
+                fi
+              fi
+            fi
