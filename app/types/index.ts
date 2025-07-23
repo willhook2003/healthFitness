@@ -26,6 +26,12 @@ export interface Transporte {
   formPago: string | null;
   dirDestino: string | null;
 }
+export interface TransportePaginatedResponse {
+  results: Transporte[];
+  total: number;
+  page: number;
+  pages: number;
+}
 
 // API Response types
 export interface ApiResponse<T> {

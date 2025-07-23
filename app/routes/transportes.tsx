@@ -1,64 +1,78 @@
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
+import type { ColumnDef } from "@tanstack/react-table";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { Transporte, TransportePaginatedResponse } from "~/types";
+import { transporteService } from "~/services/transporte.services";
+import { DataTable } from "~/components/table/DataTable";
+import { DataTableActions, type TableAction } from "~/components/table/DataTableActions";
+import { Pagination } from "~/components/table/Pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { Badge } from "~/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import type { Transporte } from "~/types";
+import { Button } from "~/components/ui/button";
+import { Plus } from "lucide-react";
 
-const mockTransportes: Transporte[] = [
-  { 
-    id: 1, 
-    localidad: "Buenos Aires", 
-    destinatario: "Juan Pérez", 
-    transporte: "Camión", 
-    nCuenta: "CUENTA001", 
-    direccion: "Av. Corrientes 1234", 
-    horario: "8:00 - 18:00", 
-    formPago: "Efectivo", 
-    dirDestino: "Calle Florida 567" 
+const columns: ColumnDef<Transporte>[] = [
+  {
+    accessorKey: "id",
+    header: "ID",
   },
-  { 
-    id: 2, 
-    localidad: "Córdoba", 
-    destinatario: "María García", 
-    transporte: "Furgón", 
-    nCuenta: "CUENTA002", 
-    direccion: "San Martín 890", 
-    horario: "9:00 - 17:00", 
-    formPago: "Transferencia", 
-    dirDestino: "Av. Colón 123" 
+  {
+    accessorKey: "localidad",
+    header: "Localidad",
   },
-  { 
-    id: 3, 
-    localidad: "Rosario", 
-    destinatario: "Carlos López", 
-    transporte: "Camión", 
-    nCuenta: "CUENTA003", 
-    direccion: "Pellegrini 456", 
-    horario: "7:00 - 19:00", 
-    formPago: "Cheque", 
-    dirDestino: "Oroño 789" 
+  {
+    accessorKey: "destinatario",
+    header: "Destinatario",
   },
-  { 
-    id: 4, 
-    localidad: "Mendoza", 
-    destinatario: "Ana Rodríguez", 
-    transporte: "Furgón", 
-    nCuenta: "CUENTA004", 
-    direccion: "San Martín 321", 
-    horario: "8:30 - 17:30", 
-    formPago: "Efectivo", 
-    dirDestino: "Las Heras 654" 
+  {
+    accessorKey: "transporte",
+    header: "Transporte",
+  },
+  {
+    accessorKey: "nCuenta",
+    header: "N° Cuenta",
+  },
+  {
+    accessorKey: "direccion",
+    header: "Dirección",
+  },
+  {
+    accessorKey: "horario",
+    header: "Horario",
+  },
+  {
+    accessorKey: "formPago",
+    header: "Forma Pago",
+  },
+  {
+    accessorKey: "dirDestino",
+    header: "Dir. Destino",
   },
 ];
 
 export default function TransportesPage() {
-  const [transportes, setTransportes] = useState<Transporte[]>(mockTransportes);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10); // cantidad por página
 
-  const handleDelete = (id: number) => {
-    setTransportes(transportes.filter(transporte => transporte.id !== id));
-  };
+
+  const acciones: TableAction<Transporte>[] = [
+  {
+    label: "Editar",
+    onClick: (transporte) => console.log("Editar", transporte),
+  },
+  {
+    label: "Eliminar",
+    onClick: (transporte) => console.log("Eliminar", transporte),
+  },
+];
+
+  const { data, isPending, isFetching, isError, error, isPlaceholderData } =
+    useQuery<TransportePaginatedResponse, Error>({
+      queryKey: ["transportes", page, limit],
+      queryFn: () => transporteService.getAllPaginated({ page, limit }),
+      placeholderData: keepPreviousData,
+    });
+
+  console.log("datadata", data);
 
   return (
     <div className="space-y-6">
@@ -80,53 +94,22 @@ export default function TransportesPage() {
           <CardTitle>Lista de Transportes</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Localidad</TableHead>
-                <TableHead>Destinatario</TableHead>
-                <TableHead>Transporte</TableHead>
-                <TableHead>N° Cuenta</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Horario</TableHead>
-                <TableHead>Forma Pago</TableHead>
-                <TableHead>Dir. Destino</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transportes.map((transporte) => (
-                <TableRow key={transporte.id}>
-                  <TableCell className="font-medium">{transporte.id}</TableCell>
-                  <TableCell>{transporte.localidad || '-'}</TableCell>
-                  <TableCell>{transporte.destinatario || '-'}</TableCell>
-                  <TableCell>{transporte.transporte || '-'}</TableCell>
-                  <TableCell>{transporte.nCuenta || '-'}</TableCell>
-                  <TableCell className="max-w-xs truncate">{transporte.direccion || '-'}</TableCell>
-                  <TableCell>{transporte.horario || '-'}</TableCell>
-                  <TableCell>{transporte.formPago || '-'}</TableCell>
-                  <TableCell className="max-w-xs truncate">{transporte.dirDestino || '-'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleDelete(transporte.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {/* Tabla */}
+          <DataTable
+            columns={columns}
+            data={data?.results ?? []}
+            isLoading={isFetching}
+            actions={(row) => <DataTableActions item={row} actions={acciones} />}
+          />
+          {/* Paginación */}
+          <Pagination
+            page={page}
+            pages={data?.pages || 1}
+            total={data?.total || 0}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
     </div>
   );
-} 
+}
