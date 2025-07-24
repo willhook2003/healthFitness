@@ -5,14 +5,14 @@ import {
 } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "~/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { SpinnerOverlay } from "../spinner";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -66,8 +66,8 @@ export function DataTable<TData, TValue>({
       </Table>
       {/* Loading*/}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/70 dark:bg-background/80 flex items-center justify-center z-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="absolute inset-0 z-10">
+          <SpinnerOverlay height="100%" className="!h-full" />
         </div>
       )}
     </div>

@@ -4,32 +4,24 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { Transporte, TransportePaginatedResponse } from "~/types";
 import { transporteService } from "~/services/transporte.services";
 import { DataTable } from "~/components/table/DataTable";
-import { DataTableActions, type TableAction } from "~/components/table/DataTableActions";
+import {
+  DataTableActions,
+  type TableAction,
+} from "~/components/table/DataTableActions";
 import { Pagination } from "~/components/table/Pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const columns: ColumnDef<Transporte>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
-  {
-    accessorKey: "localidad",
-    header: "Localidad",
-  },
-  {
-    accessorKey: "destinatario",
-    header: "Destinatario",
-  },
   {
     accessorKey: "transporte",
     header: "Transporte",
   },
   {
-    accessorKey: "nCuenta",
-    header: "N° Cuenta",
+    accessorKey: "localidad",
+    header: "Localidad",
   },
   {
     accessorKey: "direccion",
@@ -40,8 +32,16 @@ const columns: ColumnDef<Transporte>[] = [
     header: "Horario",
   },
   {
+    accessorKey: "nCuenta",
+    header: "N° Cuenta",
+  },
+  {
     accessorKey: "formPago",
     header: "Forma Pago",
+  },
+  {
+    accessorKey: "destinatario",
+    header: "Destinatario",
   },
   {
     accessorKey: "dirDestino",
@@ -50,20 +50,21 @@ const columns: ColumnDef<Transporte>[] = [
 ];
 
 export default function TransportesPage() {
+  const navigate = useNavigate();
+
   const [page, setPage] = useState(1);
   const [limit] = useState(10); // cantidad por página
 
-
   const acciones: TableAction<Transporte>[] = [
-  {
-    label: "Editar",
-    onClick: (transporte) => console.log("Editar", transporte),
-  },
-  {
-    label: "Eliminar",
-    onClick: (transporte) => console.log("Eliminar", transporte),
-  },
-];
+    {
+      label: "Editar",
+      onClick: (transporte) => navigate(`/transportes/${transporte.id}/edit`),
+    },
+    {
+      label: "Eliminar",
+      onClick: (transporte) => console.log("Eliminar", transporte),
+    },
+  ];
 
   const { data, isPending, isFetching, isError, error, isPlaceholderData } =
     useQuery<TransportePaginatedResponse, Error>({
@@ -99,7 +100,9 @@ export default function TransportesPage() {
             columns={columns}
             data={data?.results ?? []}
             isLoading={isFetching}
-            actions={(row) => <DataTableActions item={row} actions={acciones} />}
+            actions={(row) => (
+              <DataTableActions item={row} actions={acciones} />
+            )}
           />
           {/* Paginación */}
           <Pagination
