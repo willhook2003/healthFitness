@@ -1,11 +1,11 @@
-import type { TransportePaginatedResponse } from "~/types";
+import type { PaginatedResponse, Transporte } from "~/types";
 import axiosInstance from "../lib/api";
 import type { UpdateTransporteForm } from "~/types/transporte.schema";
 
 export const transporteService = {
   getAllPaginated: async (
     params: any
-  ): Promise<TransportePaginatedResponse> => {
+  ): Promise<PaginatedResponse<Transporte>> => {
     try {
       const response = await axiosInstance.get("/transporte", { params });
       return response.data.data;
