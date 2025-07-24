@@ -20,6 +20,8 @@ export interface Tecnico {
   legajo: string | null;
   email: string | null;
   contexto?: Contexto; 
+  guiaEmailCC?: string;
+  retornoEmailCC?: string; 
 }
 
 // Transporte (Transport) interface matching Sequelize model
