@@ -12,7 +12,7 @@ import { Input } from "~/components/ui/input";
 import {
   transporteSchema,
   type TransporteForm,
-} from "~/types/transporte.schema";
+} from "~/schema/transporte.schema";
 
 export default function EditTransporte() {
   const { transporteId } = useParams<{ transporteId: string }>();
@@ -26,9 +26,6 @@ export default function EditTransporte() {
     title: string;
     description?: string;
   }>({ open: false, type: "success", title: "" });
-
-  // Estado para mostrar spinner de guardado
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Consulta para obtener los datos del transporte por ID
   const {
@@ -64,7 +61,7 @@ export default function EditTransporte() {
   // Reset Form al cargar transporte
   useEffect(() => {
     if (transporte) {
-     reset(transporte as TransporteForm);
+      reset(transporte as TransporteForm);
     }
   }, [transporte, reset]);
 
@@ -80,7 +77,6 @@ export default function EditTransporte() {
         title: "Transporte actualizado correctamente",
       });
       // Mostrar spinner de guardado y redirect
-      setIsSubmitting(true);
       setTimeout(() => {
         navigate("/transportes");
       }, 1500);
@@ -127,7 +123,7 @@ export default function EditTransporte() {
         className="grid gap-6 max-w-4xl mx-auto"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {/* Transporte */}
+          {/* Transporte */}
           <div className="grid gap-1">
             <label htmlFor="transporte" className="text-sm font-medium">
               Transporte
@@ -140,7 +136,7 @@ export default function EditTransporte() {
             )}
           </div>
 
-           {/* Nº de Cuenta */}
+          {/* Nº de Cuenta */}
           <div className="grid gap-1">
             <label htmlFor="nCuenta" className="text-sm font-medium">
               Nº de Cuenta
@@ -159,7 +155,7 @@ export default function EditTransporte() {
             )}
           </div>
 
-           {/* Destinatario */}
+          {/* Destinatario */}
           <div className="grid gap-1">
             <label htmlFor="destinatario" className="text-sm font-medium">
               Destinatario
@@ -192,7 +188,7 @@ export default function EditTransporte() {
             <Input id="formPago" maxLength={140} {...register("formPago")} />
           </div>
 
-            {/* Dirección */}
+          {/* Dirección */}
           <div className="grid gap-1 col-span-full">
             <label htmlFor="direccion" className="text-sm font-medium">
               Dirección
@@ -200,7 +196,7 @@ export default function EditTransporte() {
             <Input id="direccion" maxLength={240} {...register("direccion")} />
           </div>
 
-           {/* Dirección de Destino */}
+          {/* Dirección de Destino */}
           <div className="grid gap-1 col-span-full">
             <label htmlFor="dirDestino" className="text-sm font-medium">
               Dirección de Destino
@@ -213,7 +209,7 @@ export default function EditTransporte() {
           </div>
         </div>
 
-{/* Botones */}
+        {/* Botones */}
         <div className="flex gap-4 pt-2">
           <Button type="submit" disabled={mutation.isPending}>
             Guardar
@@ -236,7 +232,7 @@ export default function EditTransporte() {
         description={snackbar.description}
       />
 
-      {isSubmitting && (
+      {mutation.isPending && (
         <div className="fixed inset-0 bg-white/60 z-[20] flex items-center justify-center">
           <SpinnerOverlay
             height="auto"
