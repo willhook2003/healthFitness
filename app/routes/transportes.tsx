@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { Transporte, TransportePaginatedResponse } from "~/types";
+import type { Transporte, PaginatedResponse } from "~/types";
 import { transporteService } from "~/services/transporte.services";
 import { DataTable } from "~/components/table/DataTable";
 import {
@@ -67,7 +67,7 @@ export default function TransportesPage() {
   ];
 
   const { data, isPending, isFetching, isError, error, isPlaceholderData } =
-    useQuery<TransportePaginatedResponse, Error>({
+    useQuery<PaginatedResponse<Transporte>, Error>({
       queryKey: ["transportes", page, limit],
       queryFn: () => transporteService.getAllPaginated({ page, limit }),
       placeholderData: keepPreviousData,
@@ -107,7 +107,7 @@ export default function TransportesPage() {
           {/* Paginación */}
           <Pagination
             page={page}
-            pages={data?.pages || 1}
+            pages={data?.totalPages || 1}
             total={data?.total || 0}
             onPageChange={setPage}
           />
