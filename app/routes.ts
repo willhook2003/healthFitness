@@ -14,5 +14,9 @@ export default [
       "routes/edit-transporte.tsx"
     ),
     route("partes", "routes/partes.tsx"),
+    route(
+      "partes/:parteId/edit",
+      "routes/edit-parte.tsx"
+    ),
   ]),
 ] satisfies RouteConfig;

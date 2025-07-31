@@ -1,4 +1,4 @@
-import type { PaginatedResponse, Parte } from "~/types";
+import type { PaginatedResponse, Parte, ApiResponse } from "~/types";
 import axiosInstance from "../lib/api";
 
 export const parteService = {
@@ -12,20 +12,23 @@ export const parteService = {
     }
   },
 
-  getById: async (id: any): Promise<Parte> => {
+  getById: async (id: any): Promise<ApiResponse<Parte>> => {
     try {
       const response = await axiosInstance.get(`/parte/${id}`);
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error("Error al obtener parte por ID:", error);
       throw error;
     }
   },
 
-  updateParteById: async (id: any, data: Partial<Parte>): Promise<{ id: number }> => {
+  updateParteById: async (
+    id: any,
+    data: Partial<Parte>
+  ): Promise<ApiResponse<Parte>> => {
     try {
       const response = await axiosInstance.patch(`/parte/${id}`, data);
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error("Error al actualizar parte:", error);
       throw error;
