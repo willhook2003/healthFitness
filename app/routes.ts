@@ -5,6 +5,10 @@ export default [
     index("routes/home.tsx"),
     route("tecnicos", "routes/tecnicos.tsx"),
     route("transportes", "routes/transportes.tsx"),
+    route(
+      "transportes/:transporteId/edit",
+      "routes/edit-transporte.tsx"
+    ),
     route("partes", "routes/partes.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -35,7 +35,7 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  results: T[];
   total: number;
   page: number;
   limit: number;

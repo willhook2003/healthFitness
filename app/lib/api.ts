@@ -3,7 +3,7 @@ import type { Parte, Tecnico, Transporte, ApiResponse, PaginatedResponse } from 
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json',
   },
