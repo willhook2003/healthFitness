@@ -5,6 +5,13 @@ export interface Parte {
   descripcion: string | null;
 }
 
+// Contexto (Context) interface matching Sequelize model
+export interface Contexto {
+  id: number;
+  nombre: string;
+  codigo: string;
+}
+
 // Tecnico (Technician) interface matching Sequelize model
 export interface Tecnico {
   id: number;
@@ -12,6 +19,9 @@ export interface Tecnico {
   telefono: string | null;
   legajo: string | null;
   email: string | null;
+  contexto?: Contexto; 
+  guiaEmailCC?: string;
+  retornoEmailCC?: string; 
 }
 
 // Transporte (Transport) interface matching Sequelize model
