@@ -73,8 +73,6 @@ export default function TransportesPage() {
       placeholderData: keepPreviousData,
     });
 
-  console.log("datadata", data);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

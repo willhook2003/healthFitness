@@ -1,6 +1,6 @@
 import type { PaginatedResponse, Transporte } from "~/types";
 import axiosInstance from "../lib/api";
-import type { UpdateTransporteForm } from "~/types/transporte.schema";
+import type { UpdateTransporteForm } from "~/schema/transporte.schema";
 
 export const transporteService = {
   getAllPaginated: async (
