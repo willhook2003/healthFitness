@@ -18,5 +18,9 @@ export default [
       "partes/:parteId/edit",
       "routes/edit-parte.tsx"
     ),
+    // 👉 NUEVO:
+    route("users", "routes/users.tsx"),
+    // route("users/:userId/edit", "routes/edit-user.tsx"), // (opcional futuro)
+    // route("users/new", "routes/new-user.tsx"), // (opcional futuro)
   ]),
 ] satisfies RouteConfig;

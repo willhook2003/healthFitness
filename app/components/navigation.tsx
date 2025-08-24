@@ -17,6 +17,20 @@ export function MainNavigation() {
   return (
     <NavigationMenu className="max-w-none w-full">
       <NavigationMenuList className="space-x-4">
+         <NavigationMenuItem>
+          <Link
+            to="/users"
+            className={cn(
+              navigationMenuTriggerStyle(),
+              "text-sm font-medium transition-colors hover:text-primary",
+              isActive("/tecnicos")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            Usuarios
+          </Link>
+        </NavigationMenuItem>
         <NavigationMenuItem>
           <Link
             to="/tecnicos"
