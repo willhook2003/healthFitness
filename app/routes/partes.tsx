@@ -13,6 +13,9 @@ import {
 import type { PaginatedResponse, Parte } from "~/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router";
+import { useResourceKey } from "~/hooks/useResourceKey";
+import { useResourcePageSize } from "~/hooks/useResourcePageSize";
+import { PAGE_SIZES } from "~/contants";
 
 const parteColumns: ColumnDef<Parte>[] = [
   { accessorKey: "id", header: "ID" },
@@ -22,8 +25,9 @@ const parteColumns: ColumnDef<Parte>[] = [
 
 export default function PartesPage() {
   const navigate = useNavigate();
+  const resourceKey = useResourceKey();
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const { pageSize, setPageSize } = useResourcePageSize(resourceKey);
 
   const acciones: TableAction<Parte>[] = [
     {
@@ -37,8 +41,8 @@ export default function PartesPage() {
   ];
 
   const { data, isFetching } = useQuery<PaginatedResponse<Parte>, Error>({
-    queryKey: ["partes", page, limit],
-    queryFn: () => parteService.getAllPaginated({ page, limit }),
+    queryKey: ["partes", { page, limit: pageSize }],
+    queryFn: () => parteService.getAllPaginated({ page, limit: pageSize }),
     placeholderData: keepPreviousData,
   });
 
@@ -73,8 +77,14 @@ export default function PartesPage() {
           <Pagination
             page={page}
             pages={data?.totalPages || 1}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZES}
             total={data?.total || 0}
             onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
           />
         </CardContent>
       </Card>
